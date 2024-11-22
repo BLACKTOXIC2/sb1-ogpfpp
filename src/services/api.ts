@@ -31,7 +31,7 @@ export async function generateQuestions(text: string, numQuestions: number): Pro
     [{"question": "What is...?", "options": ["First option", "Second option", "Third option", "Fourth option"], "correctAnswer": "First option"}]`;
 
     const completion = await openai.chat.completions.create({
-      model: 'grok-beta',
+      model: 'grok-vision-beta',
       messages: [
         {
           role: 'system',
