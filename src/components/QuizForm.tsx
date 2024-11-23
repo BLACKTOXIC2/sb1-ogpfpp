@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Brain, Minus, Plus } from 'lucide-react';
 import ImageUpload from './ImageUpload';
+import { generateQuestionsFromText } from '../services/api';
 
 interface QuizFormProps {
-  onSubmit: (text: string, numQuestions: number) => void;
+  onSubmit: (questions: any[]) => void;
   isLoading: boolean;
 }
 
@@ -11,13 +12,19 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
   const [text, setText] = useState('');
   const [numQuestions, setNumQuestions] = useState(5);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (text.trim().length < 50) {
       alert('Please enter at least 50 characters of text to generate meaningful questions.');
       return;
     }
-    onSubmit(text, numQuestions);
+    try {
+      const questions = await generateQuestionsFromText(text, numQuestions);
+      onSubmit(questions);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to generate quiz';
+      alert(message);
+    }
   };
 
   const decrementQuestions = () => {
@@ -30,6 +37,10 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
 
   const handleTextExtracted = (extractedText: string) => {
     setText(extractedText);
+  };
+
+  const handleQuizGenerated = (questions: any[]) => {
+    onSubmit(questions);
   };
 
   return (
@@ -53,7 +64,11 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
           </div>
         </div>
 
-        <ImageUpload onTextExtracted={handleTextExtracted} />
+        <ImageUpload 
+          onTextExtracted={handleTextExtracted} 
+          numQuestions={numQuestions}
+          onQuizGenerated={handleQuizGenerated}
+        />
       </div>
       
       <div>

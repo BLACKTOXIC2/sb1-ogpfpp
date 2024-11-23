@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { createWorker } from 'tesseract.js';
 import { Upload, Loader2 } from 'lucide-react';
+import { generateQuestionsFromImage } from '../services/api';
 
 interface ImageUploadProps {
   onTextExtracted: (text: string) => void;
+  numQuestions: number;
+  onQuizGenerated: (questions: any[]) => void;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ onTextExtracted }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({ onTextExtracted, numQuestions, onQuizGenerated }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -15,33 +18,51 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onTextExtracted }) => {
     setProgress(0);
 
     try {
-      const worker = await createWorker({
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            setProgress(Math.round(m.progress * 100));
+      // Convert image to base64
+      const base64Image = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+          } else {
+            reject(new Error('Failed to convert image to base64'));
           }
-        }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
+
+      // Generate quiz questions directly from the image using Grok Vision
+      const questions = await generateQuestionsFromImage(base64Image, numQuestions);
+      onQuizGenerated(questions);
+
+      // Also perform OCR for text extraction
+      const worker = await createWorker();
+
+      worker.logger = (m: any) => {
+        if (m.status === 'recognizing text') {
+          setProgress(Math.round(m.progress * 100));
+        }
+      };
 
       await worker.loadLanguage('eng');
       await worker.initialize('eng');
-
+      
       const { data: { text } } = await worker.recognize(file);
       await worker.terminate();
       
       const trimmedText = text.trim();
       if (trimmedText) {
         onTextExtracted(trimmedText);
-      } else {
-        throw new Error('No text could be extracted from the image');
       }
     } catch (error) {
       const errorMessage = error instanceof Error 
         ? error.message 
-        : 'Failed to extract text from image';
+        : 'Failed to process image';
         
-      alert(`OCR Error: ${errorMessage}. Please try another image or enter text manually.`);
-      console.error('OCR Error:', errorMessage);
+      alert(`Error: ${errorMessage}. Please try another image or enter text manually.`);
+      console.error('Image processing error:', errorMessage);
     } finally {
       setIsProcessing(false);
       setProgress(0);

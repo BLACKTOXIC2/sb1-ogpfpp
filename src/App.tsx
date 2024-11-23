@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Brain } from 'lucide-react';
 import QuizForm from './components/QuizForm';
 import QuizGame from './components/QuizGame';
-import { generateQuestions } from './services/api';
 import { Question, QuizState } from './types';
 
 function App() {
@@ -15,24 +14,13 @@ function App() {
     isComplete: false,
   });
 
-  const handleQuizSubmit = async (text: string, numQuestions: number) => {
-    setError(null);
-    try {
-      setIsLoading(true);
-      const questions = await generateQuestions(text, numQuestions);
-      setQuizState({
-        questions,
-        currentQuestion: 0,
-        score: 0,
-        isComplete: false,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to generate quiz';
-      setError(message);
-      console.error('Quiz generation error:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleQuizSubmit = async (questions: Question[]) => {
+    setQuizState({
+      questions,
+      currentQuestion: 0,
+      score: 0,
+      isComplete: false,
+    });
   };
 
   const handleAnswer = (answer: string) => {
@@ -66,7 +54,7 @@ function App() {
             <Brain className="w-12 h-12 text-blue-600" />
             <h1 className="text-4xl font-bold text-gray-800">AI Quiz Generator</h1>
           </div>
-          <p className="text-gray-600">Generate custom quizzes from any text using AI</p>
+          <p className="text-gray-600">Generate custom quizzes from text or images using AI</p>
         </header>
 
         <main className="flex flex-col items-center justify-center">
