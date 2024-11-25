@@ -45,6 +45,52 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-2xl">
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+          }
+
+          @keyframes wave {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+          }
+
+          .progress-ring {
+            position: absolute;
+            inset: -8px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+
+          .brain-icon {
+            animation: wave 2s ease-in-out infinite;
+          }
+
+          .brain-container {
+            position: relative;
+            width: 24px;
+            height: 24px;
+          }
+
+          .brain-pulse {
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            animation: pulse 2s ease-in-out infinite;
+          }
+        `}
+      </style>
+
       <div className="space-y-4">
         <div>
           <label htmlFor="text" className="block text-sm font-medium text-gray-700 mb-2">
@@ -111,19 +157,22 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
       <button
         type="submit"
         disabled={isLoading || text.length < 50}
-        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all disabled:bg-blue-400 disabled:cursor-not-allowed"
       >
-        {isLoading ? (
-          <>
-            <Brain className="animate-spin" />
-            Generating Quiz...
-          </>
-        ) : (
-          <>
-            <Brain />
-            Generate Quiz
-          </>
-        )}
+        <div className="brain-container">
+          {isLoading ? (
+            <>
+              <div className="brain-pulse" />
+              <div className="progress-ring" />
+              <Brain className="brain-icon relative z-10 w-6 h-6" />
+            </>
+          ) : (
+            <Brain className="w-6 h-6" />
+          )}
+        </div>
+        <span className="min-w-[120px] text-center">
+          {isLoading ? 'Generating Quiz...' : 'Generate Quiz'}
+        </span>
       </button>
     </form>
   );
