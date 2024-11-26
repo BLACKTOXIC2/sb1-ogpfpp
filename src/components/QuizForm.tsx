@@ -47,46 +47,83 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
     <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-2xl">
       <style>
         {`
+          @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-6px) rotate(-5deg); }
+            75% { transform: translateY(6px) rotate(5deg); }
+          }
+
+          @keyframes pulse-ring {
+            0% { transform: scale(0.7); opacity: 0.3; }
+            50% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(0.7); opacity: 0.3; }
+          }
+
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
           }
 
-          @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.7; }
-          }
-
-          @keyframes wave {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-          }
-
-          .progress-ring {
-            position: absolute;
-            inset: -8px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-top: 2px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-          }
-
-          .brain-icon {
-            animation: wave 2s ease-in-out infinite;
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
           }
 
           .brain-container {
             position: relative;
             width: 24px;
             height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
 
-          .brain-pulse {
+          .brain-icon {
+            position: relative;
+            z-index: 10;
+          }
+
+          .brain-icon.loading {
+            animation: float 3s ease-in-out infinite;
+          }
+
+          .pulse-ring {
             position: absolute;
-            inset: -4px;
+            inset: -8px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            animation: pulse 2s ease-in-out infinite;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+          }
+
+          .spin-ring {
+            position: absolute;
+            inset: -12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+
+          .loading-button {
+            position: relative;
+            overflow: hidden;
+          }
+
+          .loading-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(
+              90deg,
+              rgba(255, 255, 255, 0) 0%,
+              rgba(255, 255, 255, 0.2) 50%,
+              rgba(255, 255, 255, 0) 100%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
           }
         `}
       </style>
@@ -157,20 +194,20 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
       <button
         type="submit"
         disabled={isLoading || text.length < 50}
-        className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all disabled:bg-blue-400 disabled:cursor-not-allowed"
+        className={`w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed relative ${
+          isLoading ? 'loading-button bg-blue-500' : 'disabled:bg-blue-400'
+        }`}
       >
         <div className="brain-container">
-          {isLoading ? (
+          {isLoading && (
             <>
-              <div className="brain-pulse" />
-              <div className="progress-ring" />
-              <Brain className="brain-icon relative z-10 w-6 h-6" />
+              <div className="pulse-ring"></div>
+              <div className="spin-ring"></div>
             </>
-          ) : (
-            <Brain className="w-6 h-6" />
           )}
+          <Brain className={`brain-icon w-6 h-6 ${isLoading ? 'loading' : ''}`} />
         </div>
-        <span className="min-w-[120px] text-center">
+        <span className="min-w-[120px] text-center relative z-10">
           {isLoading ? 'Generating Quiz...' : 'Generate Quiz'}
         </span>
       </button>
