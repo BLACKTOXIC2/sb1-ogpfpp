@@ -104,7 +104,7 @@ const QuizGame: React.FC<QuizGameProps> = ({
   };
 
   const generateShareText = () => {
-    return `🎯 Quiz Results: ${score} points!\n\n${answerHistory.map((answer, index) => 
+    return `🎯 MCQ Results: ${score} points!\n\n${answerHistory.map((answer, index) => 
       `Q${index + 1}: ${answer.question}\n` +
       `✍️ Your answer: ${answer.userAnswer}\n` +
       `${answer.isCorrect ? '✅ Correct!' : `❌ Correct answer: ${answer.correctAnswer}`}\n`
@@ -117,7 +117,7 @@ const QuizGame: React.FC<QuizGameProps> = ({
     try {
       if (navigator.share) {
         await navigator.share({
-          title: 'My Quiz Results',
+          title: 'My MCQ Results',
           text: shareText,
           url: window.location.href
         });
@@ -199,7 +199,7 @@ const QuizGame: React.FC<QuizGameProps> = ({
             onClick={onReset}
             className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
           >
-            Start New Quiz
+            Start New MCQ
           </button>
         </div>
       </div>
