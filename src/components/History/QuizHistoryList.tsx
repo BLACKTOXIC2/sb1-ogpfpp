@@ -95,7 +95,7 @@ const QuizHistoryList: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-800">Quiz History</h2>
+        <h2 className="text-xl font-semibold text-gray-800">MCQ History</h2>
         <button
           onClick={handleClearHistory}
           className="text-red-600 hover:text-red-700 flex items-center gap-1"
