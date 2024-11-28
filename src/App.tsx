@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { Brain } from 'lucide-react';
 import QuizForm from './components/QuizForm';
 import QuizGame from './components/QuizGame';
+import HistoryTabs from './components/History/HistoryTabs';
 import { Question, QuizState } from './types';
+import { saveQuizToHistory } from './utils/storage';
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,12 +30,30 @@ function App() {
     const isCorrect = answer === currentQuestion.correctAnswer;
     const scoreChange = isCorrect ? 4 : -1;
 
-    setQuizState((prev) => ({
-      ...prev,
-      score: prev.score + scoreChange,
-      currentQuestion: prev.currentQuestion + 1,
-      isComplete: prev.currentQuestion + 1 >= prev.questions.length,
-    }));
+    const newState = {
+      ...quizState,
+      score: quizState.score + scoreChange,
+      currentQuestion: quizState.currentQuestion + 1,
+      isComplete: quizState.currentQuestion + 1 >= quizState.questions.length,
+    };
+
+    setQuizState(newState);
+
+    // Save to history if quiz is complete
+    if (newState.isComplete) {
+      saveQuizToHistory({
+        id: crypto.randomUUID(),
+        date: new Date().toISOString(),
+        score: newState.score,
+        totalQuestions: quizState.questions.length,
+        questions: quizState.questions.map((q, i) => ({
+          question: q.question,
+          userAnswer: i === quizState.currentQuestion ? answer : '',
+          correctAnswer: q.correctAnswer,
+          isCorrect: i === quizState.currentQuestion ? isCorrect : false
+        }))
+      });
+    }
   };
 
   const resetQuiz = () => {
@@ -65,7 +85,10 @@ function App() {
           )}
           
           {quizState.questions.length === 0 ? (
-            <QuizForm onSubmit={handleQuizSubmit} isLoading={isLoading} />
+            <>
+              <QuizForm onSubmit={handleQuizSubmit} isLoading={isLoading} />
+              <HistoryTabs />
+            </>
           ) : (
             <QuizGame
               questions={quizState.questions}

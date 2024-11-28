@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Brain, Minus, Plus } from 'lucide-react';
-import ImageUpload from './ImageUpload';
-import { generateQuestionsFromText } from '../services/api';
+import ImageUpload from './ImageUpload/ImageUpload';
+import { generateQuestionsFromText, generateQuestionsFromImage } from '../services/api';
+import { convertToBase64 } from '../utils/imageProcessing';
 
 interface QuizFormProps {
   onSubmit: (questions: any[]) => void;
@@ -11,6 +12,7 @@ interface QuizFormProps {
 const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
   const [text, setText] = useState('');
   const [numQuestions, setNumQuestions] = useState(5);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,12 +20,16 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
       alert('Please enter at least 50 characters of text to generate meaningful questions.');
       return;
     }
+
+    setIsGenerating(true);
     try {
       const questions = await generateQuestionsFromText(text, numQuestions);
       onSubmit(questions);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to generate quiz';
       alert(message);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -36,11 +42,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
   };
 
   const handleTextExtracted = (extractedText: string) => {
-    setText(extractedText);
-  };
-
-  const handleQuizGenerated = (questions: any[]) => {
-    onSubmit(questions);
+    setText(prev => prev + (prev ? '\n\n' : '') + extractedText);
   };
 
   return (
@@ -148,9 +150,10 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
         </div>
 
         <ImageUpload 
-          onTextExtracted={handleTextExtracted} 
+          onTextExtracted={handleTextExtracted}
           numQuestions={numQuestions}
-          onQuizGenerated={handleQuizGenerated}
+          onQuizGenerated={() => {}}
+          isGenerating={isGenerating}
         />
       </div>
       
@@ -193,22 +196,22 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
 
       <button
         type="submit"
-        disabled={isLoading || text.length < 50}
+        disabled={isLoading || text.length < 50 || isGenerating}
         className={`w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all disabled:cursor-not-allowed relative ${
-          isLoading ? 'loading-button bg-blue-500' : 'disabled:bg-blue-400'
+          isLoading || isGenerating ? 'loading-button bg-blue-500' : 'disabled:bg-blue-400'
         }`}
       >
         <div className="brain-container">
-          {isLoading && (
+          {(isLoading || isGenerating) && (
             <>
               <div className="pulse-ring"></div>
               <div className="spin-ring"></div>
             </>
           )}
-          <Brain className={`brain-icon w-6 h-6 ${isLoading ? 'loading' : ''}`} />
+          <Brain className={`brain-icon w-6 h-6 ${isLoading || isGenerating ? 'loading' : ''}`} />
         </div>
         <span className="min-w-[120px] text-center relative z-10">
-          {isLoading ? 'Generating Quiz...' : 'Generate Quiz'}
+          {isLoading || isGenerating ? 'Generating Quiz...' : 'Generate Quiz'}
         </span>
       </button>
     </form>
