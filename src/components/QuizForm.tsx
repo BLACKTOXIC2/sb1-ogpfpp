@@ -211,7 +211,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ onSubmit, isLoading }) => {
           <Brain className={`brain-icon w-6 h-6 ${isLoading || isGenerating ? 'loading' : ''}`} />
         </div>
         <span className="min-w-[120px] text-center relative z-10">
-          {isLoading || isGenerating ? 'Generating Quiz...' : 'Generate Quiz'}
+          {isLoading || isGenerating ? 'Generating MCQ...' : 'Generate MCQ'}
         </span>
       </button>
     </form>

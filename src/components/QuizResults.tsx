@@ -11,7 +11,7 @@ const QuizResults = forwardRef<HTMLDivElement, QuizResultsProps>(
     return (
       <div ref={ref} className="bg-white p-6 rounded-lg shadow-lg space-y-6">
         <div className="text-center space-y-2">
-          <h2 className="text-3xl font-bold text-gray-800">Quiz Complete! 🎉</h2>
+          <h2 className="text-3xl font-bold text-gray-800">MCQ Complete! 🎉</h2>
           <p className="text-xl">Final Score: {score}</p>
         </div>
 

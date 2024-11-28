@@ -44,7 +44,7 @@ const QuizHistoryList: React.FC = () => {
 
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-800">
-            Quiz from {new Date(selectedQuiz.date).toLocaleDateString()} at{' '}
+            MCQ from {new Date(selectedQuiz.date).toLocaleDateString()} at{' '}
             {new Date(selectedQuiz.date).toLocaleTimeString()}
           </h3>
 
