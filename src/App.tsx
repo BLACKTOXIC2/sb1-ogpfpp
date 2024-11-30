@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navigation from './components/Navigation';
 import TextQuiz from './pages/TextQuiz';
 import VideoQuiz from './pages/VideoQuiz';
-import TrueFalseQuiz from './pages/TrueFalseQuiz';
 
 function App() {
   return (
@@ -14,7 +13,6 @@ function App() {
           <Routes>
             <Route path="/" element={<TextQuiz />} />
             <Route path="/video" element={<VideoQuiz />} />
-            <Route path="/true-false" element={<TrueFalseQuiz />} />
           </Routes>
         </div>
       </div>
