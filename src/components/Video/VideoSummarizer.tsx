@@ -22,14 +22,12 @@ const VideoSummarizer: React.FC<VideoSummarizerProps> = ({
     setError(null);
     setIsProcessing(true);
 
-    const videoId = extractVideoId(videoUrl);
-    if (!videoId) {
-      setError('Please enter a valid YouTube video URL or ID');
-      setIsProcessing(false);
-      return;
-    }
-
     try {
+      const videoId = extractVideoId(videoUrl);
+      if (!videoId) {
+        throw new Error('Please enter a valid YouTube video URL or ID');
+      }
+
       const summary = await summarizeVideo(videoId);
       onSummaryGenerated(summary);
     } catch (error) {

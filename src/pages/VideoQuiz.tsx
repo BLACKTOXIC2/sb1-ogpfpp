@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Youtube, Brain } from 'lucide-react';
+import { Youtube, Brain, Minus, Plus } from 'lucide-react';
 import { generateQuestionsFromText } from '../services/api';
 import { Question, QuizState } from '../types';
 import QuizGame from '../components/QuizGame';
 import { saveQuizToHistory } from '../utils/storage';
 import VideoSummarizer from '../components/Video/VideoSummarizer';
+import { VideoSummary } from '../types/video';
 
 function VideoQuiz() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<string>('');
+  const [videoSummary, setVideoSummary] = useState<VideoSummary | null>(null);
+  const [numQuestions, setNumQuestions] = useState(5);
   const [quizState, setQuizState] = useState<QuizState>({
     questions: [],
     currentQuestion: 0,
@@ -17,12 +19,20 @@ function VideoQuiz() {
     isComplete: false,
   });
 
-  const handleSummaryGenerated = (videoSummary: string) => {
-    setSummary(videoSummary);
+  const handleSummaryGenerated = (summary: VideoSummary) => {
+    setVideoSummary(summary);
+  };
+
+  const decrementQuestions = () => {
+    setNumQuestions((prev) => Math.max(1, prev - 1));
+  };
+
+  const incrementQuestions = () => {
+    setNumQuestions((prev) => Math.min(10, prev + 1));
   };
 
   const handleGenerateQuiz = async () => {
-    if (!summary) {
+    if (!videoSummary) {
       setError('Please generate a video summary first');
       return;
     }
@@ -31,7 +41,7 @@ function VideoQuiz() {
     setError(null);
 
     try {
-      const questions = await generateQuestionsFromText(summary, 5);
+      const questions = await generateQuestionsFromText(videoSummary.summary, numQuestions);
       setQuizState({
         questions,
         currentQuestion: 0,
@@ -82,7 +92,7 @@ function VideoQuiz() {
       score: 0,
       isComplete: false,
     });
-    setSummary('');
+    setVideoSummary(null);
     setError(null);
   };
 
@@ -110,12 +120,59 @@ function VideoQuiz() {
               isLoading={isLoading}
             />
 
-            {summary && (
+            {videoSummary && (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-800">Video Summary</h2>
                 <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                  <p className="text-gray-700 whitespace-pre-wrap">{summary}</p>
+                  <div className="mb-4">
+                    <h3 className="font-medium text-gray-700">Video Details:</h3>
+                    <p className="text-gray-600">Title: {videoSummary.videoDetails.title}</p>
+                    <p className="text-gray-600">Channel: {videoSummary.videoDetails.channelTitle}</p>
+                    <p className="text-gray-600">Duration: {videoSummary.videoDetails.duration}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-700 mb-2">Summary:</h3>
+                    <p className="text-gray-700 whitespace-pre-wrap">{videoSummary.summary}</p>
+                  </div>
                 </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Number of questions
+                  </label>
+                  <div className="inline-flex items-center space-x-2 bg-white border border-gray-300 rounded-lg p-1">
+                    <button
+                      type="button"
+                      onClick={decrementQuestions}
+                      disabled={numQuestions <= 1}
+                      className="p-1 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Minus className="w-4 h-4 text-gray-600" />
+                    </button>
+                    
+                    <div className="relative w-20">
+                      <input
+                        type="number"
+                        value={numQuestions}
+                        onChange={(e) => setNumQuestions(Math.min(10, Math.max(1, Number(e.target.value))))}
+                        min="1"
+                        max="10"
+                        className="w-full py-1 px-2 text-center text-sm font-medium border-0 focus:ring-0"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={incrementQuestions}
+                      disabled={numQuestions >= 10}
+                      className="p-1 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="w-4 h-4 text-gray-600" />
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-500">Choose between 1-10 questions</div>
+                </div>
+
                 <button
                   onClick={handleGenerateQuiz}
                   disabled={isLoading}
