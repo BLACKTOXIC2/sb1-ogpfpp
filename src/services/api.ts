@@ -11,10 +11,10 @@ const openai = new OpenAI({
 
 export async function generateQuestionsFromText(text: string, numQuestions: number): Promise<Question[]> {
   if (!import.meta.env.VITE_GROK_API_KEY) {
-    throw new Error('API key is not configured. Please check your environment variables.');
+    throw new Error('API key is not configured');
   }
 
-  if (!text.trim()) {
+  if (typeof text !== 'string' || !text.trim()) {
     throw new Error('Please provide some text to generate questions from');
   }
 
@@ -27,10 +27,7 @@ export async function generateQuestionsFromText(text: string, numQuestions: numb
     Return ONLY a raw JSON array without any markdown formatting or code blocks. Each question must have:
     - A question string
     - An array of exactly 4 options as simple strings (no A, B, C, D prefixes)
-    - A correctAnswer that exactly matches one of the options
-    
-    Example format:
-    [{"question": "What is...?", "options": ["First option", "Second option", "Third option", "Fourth option"], "correctAnswer": "First option"}]`;
+    - A correctAnswer that exactly matches one of the options`;
 
     const completion = await openai.chat.completions.create({
       model: 'grok-beta',
@@ -50,7 +47,7 @@ export async function generateQuestionsFromText(text: string, numQuestions: numb
 
     const content = completion.choices[0]?.message?.content;
     if (!content) {
-      throw new Error('The AI service returned an empty response');
+      throw new Error('Failed to generate questions');
     }
 
     const cleanedContent = content
@@ -63,46 +60,22 @@ export async function generateQuestionsFromText(text: string, numQuestions: numb
       parsedQuestions = JSON.parse(cleanedContent);
     } catch (parseError) {
       console.error('Failed to parse AI response:', content);
-      throw new Error('The AI service returned an invalid JSON response');
+      throw new Error('Failed to parse the generated questions');
     }
 
     if (!Array.isArray(parsedQuestions)) {
       throw new Error('Expected an array of questions but received a different format');
     }
 
-    return parsedQuestions.map((q, index) => {
-      if (!q.question || typeof q.question !== 'string') {
-        throw new Error(`Question ${index + 1} is missing or invalid`);
-      }
-      if (!Array.isArray(q.options) || q.options.length !== 4) {
-        throw new Error(`Question ${index + 1} must have exactly 4 options`);
-      }
-      if (!q.options.includes(q.correctAnswer)) {
-        throw new Error(`Question ${index + 1} has a correct answer that doesn't match any option`);
-      }
-
-      const cleanOptions = q.options.map(opt => 
-        opt.replace(/^[A-D]\.\s*/, '').trim()
-      );
-
-      const cleanCorrectAnswer = q.correctAnswer.replace(/^[A-D]\.\s*/, '').trim();
-
-      return {
-        id: index + 1,
-        question: q.question.trim(),
-        options: cleanOptions,
-        correctAnswer: cleanCorrectAnswer
-      };
-    });
+    return parsedQuestions.map((q, index) => ({
+      id: index + 1,
+      question: q.question.trim(),
+      options: q.options.map(opt => opt.trim()),
+      correctAnswer: q.correctAnswer.trim()
+    }));
   } catch (error) {
-    if (error instanceof Error) {
-      console.error('Quiz generation error details:', error);
-      throw new Error(
-        error.message.includes('API key') ? error.message : 
-        'Failed to generate quiz questions. Please try again with different text or number of questions.'
-      );
-    }
-    throw new Error('An unexpected error occurred while generating the quiz');
+    console.error('Question generation error:', error);
+    throw error;
   }
 }
 

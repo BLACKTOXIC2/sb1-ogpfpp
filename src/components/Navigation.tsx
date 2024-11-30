@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Brain, Youtube } from 'lucide-react';
+import { Brain, Youtube, CheckSquare } from 'lucide-react';
 
 const Navigation = () => {
   return (
@@ -33,6 +33,19 @@ const Navigation = () => {
             >
               <Youtube className="w-5 h-5" />
               <span>Video MCQ</span>
+            </NavLink>
+            <NavLink
+              to="/true-false"
+              className={({ isActive }) =>
+                `flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium ${
+                  isActive
+                    ? 'text-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                }`
+              }
+            >
+              <CheckSquare className="w-5 h-5" />
+              <span>True/False</span>
             </NavLink>
           </div>
         </div>
