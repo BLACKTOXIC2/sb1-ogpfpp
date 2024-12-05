@@ -1,8 +1,13 @@
+import { VideoDetails } from './video';
+
 export interface QuizHistoryEntry {
   id: string;
   date: string;
   score: number;
   totalQuestions: number;
+  type: 'text' | 'video';
+  videoTitle?: string;
+  videoDetails?: VideoDetails;
   questions: {
     question: string;
     userAnswer: string;

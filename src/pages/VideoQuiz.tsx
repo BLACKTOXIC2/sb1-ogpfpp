@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Youtube, Brain, Minus, Plus } from 'lucide-react';
+import { Youtube, Brain, Award } from 'lucide-react';
 import { generateQuestionsFromText } from '../services/api';
 import { Question, QuizState } from '../types';
 import QuizGame from '../components/QuizGame';
 import { saveQuizToHistory } from '../utils/storage';
 import VideoSummarizer from '../components/Video/VideoSummarizer';
 import { VideoSummary } from '../types/video';
+import QuestionQuantity from '../components/QuestionControl/QuestionQuantity';
+import VideoQuizHistory from '../components/History/VideoQuizHistory';
+import { QuizHistoryEntry } from '../types/history';
 
 function VideoQuiz() {
   const [isLoading, setIsLoading] = useState(false);
@@ -18,17 +21,16 @@ function VideoQuiz() {
     score: 0,
     isComplete: false,
   });
+  const [selectedQuiz, setSelectedQuiz] = useState<QuizHistoryEntry | null>(null);
+  const [answeredQuestions, setAnsweredQuestions] = useState<{
+    question: string;
+    userAnswer: string;
+    correctAnswer: string;
+    isCorrect: boolean;
+  }[]>([]);
 
   const handleSummaryGenerated = (summary: VideoSummary) => {
     setVideoSummary(summary);
-  };
-
-  const decrementQuestions = () => {
-    setNumQuestions((prev) => Math.max(1, prev - 1));
-  };
-
-  const incrementQuestions = () => {
-    setNumQuestions((prev) => Math.min(10, prev + 1));
   };
 
   const handleGenerateQuiz = async () => {
@@ -48,6 +50,7 @@ function VideoQuiz() {
         score: 0,
         isComplete: false,
       });
+      setAnsweredQuestions([]);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to generate quiz');
     } finally {
@@ -60,6 +63,15 @@ function VideoQuiz() {
     const isCorrect = answer === currentQuestion.correctAnswer;
     const scoreChange = isCorrect ? 4 : -1;
 
+    const newAnsweredQuestion = {
+      question: currentQuestion.question,
+      userAnswer: answer,
+      correctAnswer: currentQuestion.correctAnswer,
+      isCorrect
+    };
+
+    setAnsweredQuestions(prev => [...prev, newAnsweredQuestion]);
+
     const newState = {
       ...quizState,
       score: quizState.score + scoreChange,
@@ -69,19 +81,19 @@ function VideoQuiz() {
 
     setQuizState(newState);
 
-    if (newState.isComplete) {
-      saveQuizToHistory({
+    if (newState.isComplete && videoSummary) {
+      const quizHistory: QuizHistoryEntry = {
         id: crypto.randomUUID(),
         date: new Date().toISOString(),
         score: newState.score,
         totalQuestions: quizState.questions.length,
-        questions: quizState.questions.map((q, i) => ({
-          question: q.question,
-          userAnswer: i === quizState.currentQuestion ? answer : '',
-          correctAnswer: q.correctAnswer,
-          isCorrect: i === quizState.currentQuestion ? isCorrect : false
-        }))
-      });
+        type: 'video',
+        videoTitle: videoSummary.videoDetails.title,
+        videoDetails: videoSummary.videoDetails,
+        questions: [...answeredQuestions, newAnsweredQuestion]
+      };
+      
+      saveQuizToHistory(quizHistory);
     }
   };
 
@@ -94,7 +106,67 @@ function VideoQuiz() {
     });
     setVideoSummary(null);
     setError(null);
+    setSelectedQuiz(null);
+    setAnsweredQuestions([]);
   };
+
+  if (selectedQuiz) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <button
+            onClick={() => setSelectedQuiz(null)}
+            className="mb-6 text-blue-600 hover:text-blue-700 flex items-center gap-2"
+          >
+            ← Back to Video Quiz
+          </button>
+          <div className="bg-white rounded-lg shadow-lg p-6 space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-gray-800">{selectedQuiz.videoTitle}</h2>
+              <p className="text-gray-600">
+                Completed on {new Date(selectedQuiz.date).toLocaleDateString()} at{' '}
+                {new Date(selectedQuiz.date).toLocaleTimeString()}
+              </p>
+              <div className="flex items-center gap-2">
+                <Award className="w-6 h-6 text-yellow-500" />
+                <span className="text-xl font-semibold">
+                  Final Score: {selectedQuiz.score} / {selectedQuiz.totalQuestions * 4}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-gray-700">Question Review</h3>
+              {selectedQuiz.questions.map((q, idx) => (
+                <div key={idx} className={`p-4 rounded-lg ${q.isCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
+                  <p className="font-medium text-gray-800 mb-2">
+                    Question {idx + 1}: {q.question}
+                  </p>
+                  <div className="space-y-1">
+                    <p className={`${q.isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                      Your answer: {q.userAnswer || '(No answer)'}
+                    </p>
+                    {!q.isCorrect && (
+                      <p className="text-green-600">
+                        Correct answer: {q.correctAnswer}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={resetQuiz}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            >
+              Start New Quiz
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -136,42 +208,10 @@ function VideoQuiz() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Number of questions
-                  </label>
-                  <div className="inline-flex items-center space-x-2 bg-white border border-gray-300 rounded-lg p-1">
-                    <button
-                      type="button"
-                      onClick={decrementQuestions}
-                      disabled={numQuestions <= 1}
-                      className="p-1 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Minus className="w-4 h-4 text-gray-600" />
-                    </button>
-                    
-                    <div className="relative w-20">
-                      <input
-                        type="number"
-                        value={numQuestions}
-                        onChange={(e) => setNumQuestions(Math.min(10, Math.max(1, Number(e.target.value))))}
-                        min="1"
-                        max="10"
-                        className="w-full py-1 px-2 text-center text-sm font-medium border-0 focus:ring-0"
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={incrementQuestions}
-                      disabled={numQuestions >= 10}
-                      className="p-1 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Plus className="w-4 h-4 text-gray-600" />
-                    </button>
-                  </div>
-                  <div className="text-xs text-gray-500">Choose between 1-10 questions</div>
-                </div>
+                <QuestionQuantity 
+                  quantity={numQuestions} 
+                  onChange={setNumQuestions} 
+                />
 
                 <button
                   onClick={handleGenerateQuiz}
@@ -183,6 +223,10 @@ function VideoQuiz() {
                 </button>
               </div>
             )}
+
+            <div className="mt-8">
+              <VideoQuizHistory onSelectQuiz={setSelectedQuiz} />
+            </div>
           </div>
         ) : (
           <QuizGame
