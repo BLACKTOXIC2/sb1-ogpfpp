@@ -17,8 +17,7 @@ const VideoSummarizer: React.FC<VideoSummarizerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAnalyze = async () => {
     setError(null);
     setIsProcessing(true);
 
@@ -38,7 +37,7 @@ const VideoSummarizer: React.FC<VideoSummarizerProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full space-y-4">
+    <div className="w-full space-y-4">
       <div>
         <label htmlFor="videoUrl" className="block text-sm font-medium text-gray-700 mb-2">
           YouTube Video URL or ID
@@ -51,7 +50,6 @@ const VideoSummarizer: React.FC<VideoSummarizerProps> = ({
             onChange={(e) => setVideoUrl(e.target.value)}
             placeholder="https://www.youtube.com/watch?v=... or video ID"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-10"
-            required
           />
           <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
         </div>
@@ -67,7 +65,8 @@ const VideoSummarizer: React.FC<VideoSummarizerProps> = ({
       )}
 
       <button
-        type="submit"
+        type="button"
+        onClick={handleAnalyze}
         disabled={isLoading || isProcessing || !videoUrl}
         className={`w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all ${
           isLoading || isProcessing || !videoUrl ? 'opacity-50 cursor-not-allowed' : ''
@@ -85,7 +84,7 @@ const VideoSummarizer: React.FC<VideoSummarizerProps> = ({
           </>
         )}
       </button>
-    </form>
+    </div>
   );
 };
 
