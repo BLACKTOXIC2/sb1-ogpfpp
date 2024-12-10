@@ -114,29 +114,60 @@ export async function summarizeVideo(videoId: string): Promise<VideoSummary> {
   try {
     const videoDetails = await fetchVideoDetails(videoId);
     
-    const prompt = `Analyze and summarize this YouTube video:
-    
-    Title: ${videoDetails.title}
-    Channel: ${videoDetails.channelTitle}
-    Published: ${videoDetails.publishedAt}
-    Duration: ${videoDetails.duration}
-    Description: ${videoDetails.description}
-    
-    Please provide a comprehensive summary that:
-    1. Outlines the main topics and key points
-    2. Explains important concepts and their relationships
-    3. Highlights any examples or case studies mentioned
-    4. Includes relevant technical details or data
-    5. Captures the core message or conclusion
-    
-    Format the summary in clear paragraphs with proper transitions.`;
+    const prompt = `Provide a comprehensive analysis and summary of this YouTube video:
+
+Title: ${videoDetails.title}
+Channel: ${videoDetails.channelTitle}
+Published: ${videoDetails.publishedAt}
+Duration: ${videoDetails.duration}
+Description: ${videoDetails.description}
+
+Please structure your response in the following format:
+
+1. Title and Context
+- Video title and creator
+- Target audience
+- Purpose of the video
+
+2. Introduction
+- Brief overview of the main topic
+- Why this topic is important
+- What viewers will learn
+
+3. Main Content Analysis
+- Key concepts and themes covered
+- Important definitions or terminology
+- Step-by-step breakdown of any processes
+- Examples or case studies presented
+
+4. Technical Details
+- Tools, technologies, or methods discussed
+- Specific techniques or approaches mentioned
+- Any code, formulas, or technical specifications
+
+5. Practical Applications
+- Real-world examples
+- How to apply the knowledge
+- Common use cases or scenarios
+
+6. Key Takeaways
+- Main points to remember
+- Critical insights
+- Best practices mentioned
+
+7. Additional Resources
+- Related topics mentioned
+- Referenced materials
+- Suggested further learning
+
+Please provide detailed information for each section while maintaining clarity and coherence.`;
 
     const completion = await openai.chat.completions.create({
       model: 'grok-beta',
       messages: [
         {
           role: 'system',
-          content: 'You are an expert at creating detailed, well-structured summaries that capture the essence of educational content. Focus on accuracy, clarity, and maintaining the logical flow of ideas.'
+          content: 'You are an expert content analyst specializing in creating detailed, well-structured video summaries. Focus on accuracy, clarity, and maintaining a logical flow of information. Use clear headings and bullet points for better readability.'
         },
         {
           role: 'user',
@@ -144,7 +175,7 @@ export async function summarizeVideo(videoId: string): Promise<VideoSummary> {
         }
       ],
       temperature: 0.7,
-      max_tokens: 1500,
+      max_tokens: 2000,
     });
 
     const summary = completion.choices[0]?.message?.content;

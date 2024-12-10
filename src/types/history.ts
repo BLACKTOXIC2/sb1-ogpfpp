@@ -5,13 +5,14 @@ export interface QuizHistoryEntry {
   date: string;
   score: number;
   totalQuestions: number;
-  type: 'text' | 'video';
+  type: 'text' | 'video' | 'true-false';
   videoTitle?: string;
   videoDetails?: VideoDetails;
   questions: {
-    question: string;
-    userAnswer: string;
-    correctAnswer: string;
+    question?: string;
+    statement?: string;
+    userAnswer: string | boolean;
+    correctAnswer: string | boolean;
     isCorrect: boolean;
   }[];
 }
@@ -27,4 +28,14 @@ export interface ChatSession {
   id: string;
   date: string;
   messages: ChatMessage[];
+}
+
+export interface TrueFalseHistoryEntry extends QuizHistoryEntry {
+  type: 'true-false';
+  questions: {
+    statement: string;
+    userAnswer: boolean;
+    correctAnswer: boolean;
+    isCorrect: boolean;
+  }[];
 }

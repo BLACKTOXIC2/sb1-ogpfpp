@@ -5,7 +5,8 @@ import { Question, QuizState } from '../types';
 import QuizGame from '../components/QuizGame';
 import { saveQuizToHistory } from '../utils/storage';
 import VideoSummarizer from '../components/Video/VideoSummarizer';
-import { VideoSummary } from '../types/video';
+import VideoSummary from '../components/Video/VideoSummary';
+import { VideoSummary as VideoSummaryType } from '../types/video';
 import QuestionQuantity from '../components/QuestionControl/QuestionQuantity';
 import VideoQuizHistory from '../components/History/VideoQuizHistory';
 import { QuizHistoryEntry } from '../types/history';
@@ -13,7 +14,7 @@ import { QuizHistoryEntry } from '../types/history';
 function VideoQuiz() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [videoSummary, setVideoSummary] = useState<VideoSummary | null>(null);
+  const [videoSummary, setVideoSummary] = useState<VideoSummaryType | null>(null);
   const [numQuestions, setNumQuestions] = useState(5);
   const [quizState, setQuizState] = useState<QuizState>({
     questions: [],
@@ -29,8 +30,9 @@ function VideoQuiz() {
     isCorrect: boolean;
   }[]>([]);
 
-  const handleSummaryGenerated = (summary: VideoSummary) => {
+  const handleSummaryGenerated = (summary: VideoSummaryType) => {
     setVideoSummary(summary);
+    setError(null);
   };
 
   const handleGenerateQuiz = async () => {
@@ -85,9 +87,9 @@ function VideoQuiz() {
       const quizHistory: QuizHistoryEntry = {
         id: crypto.randomUUID(),
         date: new Date().toISOString(),
+        type: 'video',
         score: newState.score,
         totalQuestions: quizState.questions.length,
-        type: 'video',
         videoTitle: videoSummary.videoDetails.title,
         videoDetails: videoSummary.videoDetails,
         questions: [...answeredQuestions, newAnsweredQuestion]
@@ -193,20 +195,8 @@ function VideoQuiz() {
             />
 
             {videoSummary && (
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-gray-800">Video Summary</h2>
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                  <div className="mb-4">
-                    <h3 className="font-medium text-gray-700">Video Details:</h3>
-                    <p className="text-gray-600">Title: {videoSummary.videoDetails.title}</p>
-                    <p className="text-gray-600">Channel: {videoSummary.videoDetails.channelTitle}</p>
-                    <p className="text-gray-600">Duration: {videoSummary.videoDetails.duration}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-700 mb-2">Summary:</h3>
-                    <p className="text-gray-700 whitespace-pre-wrap">{videoSummary.summary}</p>
-                  </div>
-                </div>
+              <div className="space-y-6">
+                <VideoSummary summary={videoSummary} />
 
                 <QuestionQuantity 
                   quantity={numQuestions} 
