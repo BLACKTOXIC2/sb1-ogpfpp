@@ -43,6 +43,7 @@ function TextQuiz() {
       saveQuizToHistory({
         id: crypto.randomUUID(),
         date: new Date().toISOString(),
+        type: 'text',
         score: newState.score,
         totalQuestions: quizState.questions.length,
         questions: quizState.questions.map((q, i) => ({
@@ -66,13 +67,13 @@ function TextQuiz() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto">
       <header className="text-center mb-12">
         <div className="flex items-center justify-center gap-2 mb-4">
           <Brain className="w-12 h-12 text-blue-600" />
-          <h1 className="text-4xl font-bold text-gray-800">AI MCQ Generator</h1>
+          <h1 className="text-4xl font-bold text-gray-800">MCQ Generator</h1>
         </div>
-        <p className="text-gray-600">Generate custom MCQ from text or images using AI</p>
+        <p className="text-gray-600">Generate custom MCQs from text or images using AI</p>
       </header>
 
       <main className="flex flex-col items-center justify-center">
