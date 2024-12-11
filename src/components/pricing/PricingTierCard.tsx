@@ -3,6 +3,7 @@ import { Check } from 'lucide-react';
 import { usePayment } from '../../hooks/usePayment';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { formatPrice } from '../../utils/pricing';
 
 interface PricingTierProps {
   name: string;
@@ -12,6 +13,7 @@ interface PricingTierProps {
   buttonText: string;
   buttonVariant: 'solid' | 'outline';
   popular?: boolean;
+  billingPeriod: string;
 }
 
 const PricingTierCard: React.FC<PricingTierProps> = ({
@@ -21,7 +23,8 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
   features,
   buttonText,
   buttonVariant,
-  popular
+  popular,
+  billingPeriod
 }) => {
   const { handlePayment, isProcessing, error } = usePayment();
   const { user } = useAuth();
@@ -41,7 +44,6 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
     try {
       const result = await handlePayment(name, parseInt(price));
       if (result.success) {
-        // Handle successful payment
         navigate('/profile');
       }
     } catch (error) {
@@ -63,8 +65,10 @@ const PricingTierCard: React.FC<PricingTierProps> = ({
       <div className="p-8">
         <h3 className="text-2xl font-bold text-gray-900 mb-4">{name}</h3>
         <div className="flex items-baseline mb-4">
-          <span className="text-4xl font-bold text-gray-900">${price}</span>
-          <span className="text-gray-600 ml-2">/month</span>
+          <span className="text-4xl font-bold text-gray-900">
+            {formatPrice(Number(price))}
+          </span>
+          <span className="text-gray-600 ml-2">/{billingPeriod}</span>
         </div>
         <p className="text-gray-600 mb-6">{description}</p>
         {error && (
