@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Brain, Youtube, CheckSquare } from 'lucide-react';
+import { Brain, Youtube, CheckSquare, DollarSign } from 'lucide-react';
 
 interface NavigationProps {
   mobile?: boolean;
@@ -12,6 +12,7 @@ const Navigation: React.FC<NavigationProps> = ({ mobile, onNavClick }) => {
     { to: '/text-quiz', icon: <Brain className="w-5 h-5" />, label: 'Text MCQ' },
     { to: '/video', icon: <Youtube className="w-5 h-5" />, label: 'Video MCQ' },
     { to: '/true-false', icon: <CheckSquare className="w-5 h-5" />, label: 'True/False' },
+    { to: '/pricing', icon: <DollarSign className="w-5 h-5" />, label: 'Pricing' },
   ];
 
   return (
