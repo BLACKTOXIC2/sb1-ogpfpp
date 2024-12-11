@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { initializeGA } from './utils/analytics/gtag';
 import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
 import Home from './pages/Home';
@@ -14,6 +15,10 @@ import Profile from './pages/Profile';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 function App() {
+  useEffect(() => {
+    initializeGA();
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
