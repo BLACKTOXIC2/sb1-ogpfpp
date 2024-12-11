@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { initializeGA } from './utils/analytics/gtag';
@@ -22,45 +23,47 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <Router>
-          <div className="min-h-screen flex flex-col bg-gray-50">
-            <Header />
-            <main className="flex-grow">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/auth/signin" element={<SignIn />} />
-                <Route path="/auth/signup" element={<SignUp />} />
-                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/profile" element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } />
-                <Route path="/text-quiz" element={
-                  <ProtectedRoute>
-                    <TextQuiz />
-                  </ProtectedRoute>
-                } />
-                <Route path="/video" element={
-                  <ProtectedRoute>
-                    <VideoQuiz />
-                  </ProtectedRoute>
-                } />
-                <Route path="/true-false" element={
-                  <ProtectedRoute>
-                    <TrueFalseQuiz />
-                  </ProtectedRoute>
-                } />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
-        </Router>
-      </AuthProvider>
-    </ErrorBoundary>
+    <HelmetProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <Router>
+            <div className="min-h-screen flex flex-col bg-gray-50">
+              <Header />
+              <main className="flex-grow">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/auth/signin" element={<SignIn />} />
+                  <Route path="/auth/signup" element={<SignUp />} />
+                  <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/text-quiz" element={
+                    <ProtectedRoute>
+                      <TextQuiz />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/video" element={
+                    <ProtectedRoute>
+                      <VideoQuiz />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/true-false" element={
+                    <ProtectedRoute>
+                      <TrueFalseQuiz />
+                    </ProtectedRoute>
+                  } />
+                </Routes>
+              </main>
+              <Footer />
+            </div>
+          </Router>
+        </AuthProvider>
+      </ErrorBoundary>
+    </HelmetProvider>
   );
 };
 
