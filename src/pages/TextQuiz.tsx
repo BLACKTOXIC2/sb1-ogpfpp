@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { Brain } from 'lucide-react';
-import QuizForm from '../components/quiz/QuizForm';
-import QuizGame from '../components/quiz/QuizGame';
+import QuizForm from '../components/QuizForm';
+import QuizGame from '../components/QuizGame';
 import HistoryTabs from '../components/History/HistoryTabs';
 import { Question, QuizState } from '../types';
 import { saveQuizToHistory } from '../utils/storage';
-import { useAnalytics } from '../hooks/useAnalytics';
 
 function TextQuiz() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { trackEvent } = useAnalytics();
   const [quizState, setQuizState] = useState<QuizState>({
     questions: [],
     currentQuestion: 0,
@@ -19,7 +17,6 @@ function TextQuiz() {
   });
 
   const handleQuizSubmit = async (questions: Question[]) => {
-    trackEvent('QUIZ_START', { type: 'text', questionCount: questions.length });
     setQuizState({
       questions,
       currentQuestion: 0,
@@ -43,12 +40,6 @@ function TextQuiz() {
     setQuizState(newState);
 
     if (newState.isComplete) {
-      trackEvent('QUIZ_COMPLETE', {
-        type: 'text',
-        score: newState.score,
-        totalQuestions: quizState.questions.length
-      });
-      
       saveQuizToHistory({
         id: crypto.randomUUID(),
         date: new Date().toISOString(),
@@ -76,29 +67,27 @@ function TextQuiz() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <header className="text-center mb-8 sm:mb-12">
+    <div className="max-w-4xl mx-auto">
+      <header className="text-center mb-12">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <Brain className="w-8 h-8 sm:w-12 sm:h-12 text-blue-600" />
-          <h1 className="text-2xl sm:text-4xl font-bold text-gray-800">MCQ Generator</h1>
+          <Brain className="w-12 h-12 text-blue-600" />
+          <h1 className="text-4xl font-bold text-gray-800">MCQ Generator</h1>
         </div>
-        <p className="text-sm sm:text-base text-gray-600">Generate custom MCQs from text or images using AI</p>
+        <p className="text-gray-600">Generate custom MCQs from text or images using AI</p>
       </header>
 
       <main className="flex flex-col items-center justify-center">
         {error && (
-          <div className="w-full mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+          <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
             {error}
           </div>
         )}
         
         {quizState.questions.length === 0 ? (
-          <div className="w-full space-y-8">
+          <>
             <QuizForm onSubmit={handleQuizSubmit} isLoading={isLoading} />
-            <div className="mt-8 sm:mt-12">
-              <HistoryTabs />
-            </div>
-          </div>
+            <HistoryTabs />
+          </>
         ) : (
           <QuizGame
             questions={quizState.questions}
