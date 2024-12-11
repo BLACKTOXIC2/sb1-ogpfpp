@@ -16,17 +16,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { state, handleError, setLoading, clearError, updateSession } = useAuthState(initialState);
 
   useEffect(() => {
+    let mounted = true;
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      updateSession(session);
+      if (mounted) {
+        updateSession(session);
+      }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      updateSession(session);
+      if (mounted) {
+        updateSession(session);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [updateSession]);
 
   const signIn = async (email: string, password: string) => {
@@ -37,6 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
     } catch (error) {
       handleError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,6 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
     } catch (error) {
       handleError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,6 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
     } catch (error) {
       handleError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,6 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
     } catch (error) {
       handleError(error);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -3,6 +3,7 @@ import { User, Settings, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useOnClickOutside } from '../../hooks/useOnClickOutside';
+import { LogoutButton } from '../../features/auth/components/LogoutButton';
 
 export const UserMenu: React.FC = () => {
   const { user } = useAuth();
@@ -33,16 +34,7 @@ export const UserMenu: React.FC = () => {
             <Settings className="w-4 h-4" />
             Profile Settings
           </Link>
-          <button
-            onClick={() => {
-              setIsOpen(false);
-              // Handle logout
-            }}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </button>
+          <LogoutButton />
         </div>
       )}
     </div>

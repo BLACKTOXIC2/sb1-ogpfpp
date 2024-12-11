@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
-import { authService } from '../services/auth.service';
 
 export const useLogout = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,7 +11,14 @@ export const useLogout = () => {
     try {
       setIsLoading(true);
       await signOut();
-      await authService.clearSession();
+      
+      // Clear local storage
+      localStorage.clear();
+      
+      // Clear session storage
+      sessionStorage.clear();
+      
+      // Navigate to sign in page
       navigate('/auth/signin');
     } catch (error) {
       console.error('Logout error:', error);
