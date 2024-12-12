@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { GoogleButton } from '../../components/auth/GoogleButton';
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -37,6 +38,19 @@ export default function SignUp() {
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900">Create an account</h2>
           <p className="mt-2 text-gray-600">Join MCQGEN today</p>
+        </div>
+
+        <div className="mt-8">
+          <GoogleButton isSignUp />
+
+          <div className="mt-6 relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
@@ -96,7 +110,7 @@ export default function SignUp() {
             className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
                 <UserPlus className="w-5 h-5" />

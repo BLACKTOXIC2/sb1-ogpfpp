@@ -6,6 +6,7 @@ import TrueFalseQuiz from '../pages/TrueFalseQuiz';
 import SignIn from '../pages/auth/SignIn';
 import SignUp from '../pages/auth/SignUp';
 import ForgotPassword from '../pages/auth/ForgotPassword';
+import AuthCallback from '../pages/auth/AuthCallback';
 import Profile from '../pages/Profile';
 import Pricing from '../pages/Pricing';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
@@ -26,6 +27,10 @@ export const routes: RouteObject[] = [
   {
     path: '/auth/forgot-password',
     element: <ForgotPassword />
+  },
+  {
+    path: '/auth/callback',
+    element: <AuthCallback />
   },
   {
     path: '/pricing',
