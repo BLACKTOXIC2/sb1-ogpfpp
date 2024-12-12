@@ -1,7 +1,10 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthContextType, AuthState } from '../types/auth';
-import { supabase } from '../lib/supabase';
-import { useAuthState } from '../hooks/useAuthState';
+import { AuthService } from '../services/auth/AuthService';
+import { AuthErrorHandler } from '../services/auth/errors/AuthErrorHandler';
+import { useSession } from '../hooks/auth/useSession';
+import { AuthLogger } from '../services/auth/logging/AuthLogger';
+import { SessionStorage } from '../services/auth/storage/SessionStorage';
 
 const initialState: AuthState = {
   user: null,
@@ -13,89 +16,145 @@ const initialState: AuthState = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { state, handleError, setLoading, clearError, updateSession } = useAuthState(initialState);
+  const [state, setState] = useState<AuthState>(initialState);
+  const session = useSession();
 
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) {
-        updateSession(session);
-      }
-    });
+    const initializeAuth = async () => {
+      try {
+        // Check for existing session in storage first
+        const storedSession = SessionStorage.getSession();
+        if (storedSession) {
+          setState(prev => ({
+            ...prev,
+            session: storedSession,
+            user: storedSession.user
+          }));
+        }
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mounted) {
-        updateSession(session);
+        // Then try to refresh the session
+        await AuthService.refreshSession();
+      } catch (error) {
+        if (mounted) {
+          const errorDetails = AuthErrorHandler.handleError(error);
+          setState(prev => ({
+            ...prev,
+            error: errorDetails.message,
+            user: null,
+            session: null
+          }));
+          
+          if (errorDetails.shouldRedirect) {
+            SessionStorage.clearSession();
+          }
+        }
+      } finally {
+        if (mounted) {
+          setState(prev => ({ ...prev, loading: false }));
+        }
       }
-    });
+    };
+
+    initializeAuth();
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
     };
-  }, [updateSession]);
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      clearError();
-      setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-    } catch (error) {
-      handleError(error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (session) {
+      setState(prev => ({
+        ...prev,
+        session,
+        user: session.user,
+        error: null
+      }));
+      SessionStorage.saveSession(session);
+    }
+  }, [session]);
+
+  const handleError = (error: unknown) => {
+    const errorDetails = AuthErrorHandler.handleError(error);
+    setState(prev => ({
+      ...prev,
+      error: errorDetails.message,
+      loading: false
+    }));
+
+    if (errorDetails.shouldRedirect) {
+      setState(prev => ({
+        ...prev,
+        user: null,
+        session: null
+      }));
+      SessionStorage.clearSession();
     }
   };
 
-  const signUp = async (email: string, password: string) => {
-    try {
-      clearError();
-      setLoading(true);
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) throw error;
-    } catch (error) {
-      handleError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      clearError();
-      setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error) {
-      handleError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetPassword = async (email: string) => {
-    try {
-      clearError();
-      setLoading(true);
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
-    } catch (error) {
-      handleError(error);
-    } finally {
-      setLoading(false);
-    }
+  const clearError = () => {
+    setState(prev => ({ ...prev, error: null }));
   };
 
   const value: AuthContextType = {
     ...state,
-    signIn,
-    signUp,
-    signOut,
-    resetPassword
+    signIn: async (email, password) => {
+      try {
+        clearError();
+        setState(prev => ({ ...prev, loading: true }));
+        const response = await AuthService.signIn(email, password);
+        
+        if (response.data.session) {
+          setState(prev => ({
+            ...prev,
+            user: response.data.session?.user ?? null,
+            session: response.data.session,
+            error: null
+          }));
+        }
+      } catch (error) {
+        handleError(error);
+      } finally {
+        setState(prev => ({ ...prev, loading: false }));
+      }
+    },
+    signUp: async (email, password) => {
+      try {
+        clearError();
+        setState(prev => ({ ...prev, loading: true }));
+        await AuthService.signUp(email, password);
+      } catch (error) {
+        handleError(error);
+      } finally {
+        setState(prev => ({ ...prev, loading: false }));
+      }
+    },
+    signOut: async () => {
+      try {
+        clearError();
+        setState(prev => ({ ...prev, loading: true }));
+        await AuthService.signOut();
+        setState({
+          ...initialState,
+          loading: false
+        });
+      } catch (error) {
+        handleError(error);
+      }
+    },
+    resetPassword: async (email) => {
+      try {
+        clearError();
+        setState(prev => ({ ...prev, loading: true }));
+        await AuthService.resetPassword(email);
+      } catch (error) {
+        handleError(error);
+      } finally {
+        setState(prev => ({ ...prev, loading: false }));
+      }
+    }
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

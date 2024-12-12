@@ -27,6 +27,17 @@ export function useAuthState(initialState: AuthState) {
     }));
   }, []);
 
+  // Listen for auth state changes
+  useCallback(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      updateSession(session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [updateSession]);
+
   return {
     state,
     handleError,
