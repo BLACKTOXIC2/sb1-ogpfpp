@@ -18,7 +18,7 @@ export default function AuthCallback() {
       setError(error instanceof Error ? error.message : 'Authentication failed');
       // Redirect to sign in after error
       setTimeout(() => {
-        window.location.replace('https://mcqgen.xyz/'); // Use full URL
+        window.location.replace('https://mcqgen.xyz/auth/signin'); // Use full URL
       }, 3000);
     }
   }
