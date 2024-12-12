@@ -8,17 +8,20 @@ export default function AuthCallback() {
   const [error, setError] = React.useState<string | null>(null);
 
   useEffect(() => {
-    async function handleAuthRedirect() {
+    async function handleAuthCallback() {
       try {
-        await GoogleAuthProvider.handleRedirect();
-        navigate('/');
+        await GoogleAuthProvider.handleCallback();
+        // Successful authentication, redirect to home
+        navigate('/', { replace: true });
       } catch (error) {
+        console.error('Auth callback error:', error);
         setError(error instanceof Error ? error.message : 'Authentication failed');
-        setTimeout(() => navigate('/auth/signin'), 3000);
+        // Redirect to sign in after error
+        setTimeout(() => navigate('/auth/signin', { replace: true }), 3000);
       }
     }
 
-    handleAuthRedirect();
+    handleAuthCallback();
   }, [navigate]);
 
   if (error) {

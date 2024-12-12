@@ -5,6 +5,7 @@ import { AuthErrorHandler } from '../services/auth/errors/AuthErrorHandler';
 import { useSession } from '../hooks/auth/useSession';
 import { AuthLogger } from '../services/auth/logging/AuthLogger';
 import { SessionStorage } from '../services/auth/storage/SessionStorage';
+import { supabase } from '../lib/supabase';
 
 const initialState: AuthState = {
   user: null,
@@ -17,140 +18,96 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(initialState);
-  const session = useSession();
 
   useEffect(() => {
-    let mounted = true;
-
-    const initializeAuth = async () => {
-      try {
-        // Check for existing session in storage first
-        const storedSession = SessionStorage.getSession();
-        if (storedSession) {
-          setState(prev => ({
-            ...prev,
-            session: storedSession,
-            user: storedSession.user
-          }));
-        }
-
-        // Then try to refresh the session
-        await AuthService.refreshSession();
-      } catch (error) {
-        if (mounted) {
-          const errorDetails = AuthErrorHandler.handleError(error);
-          setState(prev => ({
-            ...prev,
-            error: errorDetails.message,
-            user: null,
-            session: null
-          }));
-          
-          if (errorDetails.shouldRedirect) {
-            SessionStorage.clearSession();
-          }
-        }
-      } finally {
-        if (mounted) {
-          setState(prev => ({ ...prev, loading: false }));
-        }
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        setState(prev => ({
+          ...prev,
+          user: session.user,
+          session: session,
+          loading: false,
+          error: null
+        }));
+        SessionStorage.saveSession(session);
+      } else {
+        setState(prev => ({
+          ...prev,
+          user: null,
+          session: null,
+          loading: false
+        }));
+        SessionStorage.clearSession();
       }
-    };
+    });
 
-    initializeAuth();
+    // Initial session check
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        AuthLogger.error('Failed to get initial session', error);
+        setState(prev => ({ ...prev, loading: false, error: error.message }));
+      } else {
+        setState(prev => ({
+          ...prev,
+          user: session?.user ?? null,
+          session: session,
+          loading: false
+        }));
+      }
+    });
 
     return () => {
-      mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
-
-  useEffect(() => {
-    if (session) {
-      setState(prev => ({
-        ...prev,
-        session,
-        user: session.user,
-        error: null
-      }));
-      SessionStorage.saveSession(session);
-    }
-  }, [session]);
-
-  const handleError = (error: unknown) => {
-    const errorDetails = AuthErrorHandler.handleError(error);
-    setState(prev => ({
-      ...prev,
-      error: errorDetails.message,
-      loading: false
-    }));
-
-    if (errorDetails.shouldRedirect) {
-      setState(prev => ({
-        ...prev,
-        user: null,
-        session: null
-      }));
-      SessionStorage.clearSession();
-    }
-  };
-
-  const clearError = () => {
-    setState(prev => ({ ...prev, error: null }));
-  };
 
   const value: AuthContextType = {
     ...state,
     signIn: async (email, password) => {
       try {
-        clearError();
-        setState(prev => ({ ...prev, loading: true }));
+        setState(prev => ({ ...prev, loading: true, error: null }));
         const response = await AuthService.signIn(email, password);
-        
-        if (response.data.session) {
-          setState(prev => ({
-            ...prev,
-            user: response.data.session?.user ?? null,
-            session: response.data.session,
-            error: null
-          }));
-        }
+        if (response.error) throw response.error;
       } catch (error) {
-        handleError(error);
+        const errorDetails = AuthErrorHandler.handleError(error);
+        setState(prev => ({ ...prev, error: errorDetails.message }));
       } finally {
         setState(prev => ({ ...prev, loading: false }));
       }
     },
     signUp: async (email, password) => {
       try {
-        clearError();
-        setState(prev => ({ ...prev, loading: true }));
-        await AuthService.signUp(email, password);
+        setState(prev => ({ ...prev, loading: true, error: null }));
+        const response = await AuthService.signUp(email, password);
+        if (response.error) throw response.error;
       } catch (error) {
-        handleError(error);
+        const errorDetails = AuthErrorHandler.handleError(error);
+        setState(prev => ({ ...prev, error: errorDetails.message }));
       } finally {
         setState(prev => ({ ...prev, loading: false }));
       }
     },
     signOut: async () => {
       try {
-        clearError();
-        setState(prev => ({ ...prev, loading: true }));
+        setState(prev => ({ ...prev, loading: true, error: null }));
         await AuthService.signOut();
         setState({
           ...initialState,
           loading: false
         });
       } catch (error) {
-        handleError(error);
+        const errorDetails = AuthErrorHandler.handleError(error);
+        setState(prev => ({ ...prev, error: errorDetails.message }));
       }
     },
     resetPassword: async (email) => {
       try {
-        clearError();
-        setState(prev => ({ ...prev, loading: true }));
+        setState(prev => ({ ...prev, loading: true, error: null }));
         await AuthService.resetPassword(email);
       } catch (error) {
-        handleError(error);
+        const errorDetails = AuthErrorHandler.handleError(error);
+        setState(prev => ({ ...prev, error: errorDetails.message }));
       } finally {
         setState(prev => ({ ...prev, loading: false }));
       }

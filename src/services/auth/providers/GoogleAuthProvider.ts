@@ -1,5 +1,4 @@
 import { supabase } from '../../../lib/supabase';
-import { AuthError } from '../../../types/auth';
 import { AuthLogger } from '../logging/AuthLogger';
 
 export class GoogleAuthProvider {
@@ -24,16 +23,30 @@ export class GoogleAuthProvider {
     }
   }
 
-  static async handleRedirect(): Promise<void> {
+  static async handleCallback(): Promise<void> {
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      
-      if (!session) {
-        throw new Error('No session found after OAuth redirect');
+      // Get the URL hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+
+      if (!accessToken) {
+        throw new Error('No access token found in URL');
       }
+
+      // Set the session using the tokens
+      const { data: { session }, error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || ''
+      });
+
+      if (error) throw error;
+      if (!session) throw new Error('No session established');
+
+      // Store any necessary session data
+      localStorage.setItem('supabase.auth.token', JSON.stringify(session));
     } catch (error) {
-      AuthLogger.error('Failed to handle OAuth redirect', error);
+      AuthLogger.error('Failed to handle auth callback', error);
       throw error;
     }
   }
