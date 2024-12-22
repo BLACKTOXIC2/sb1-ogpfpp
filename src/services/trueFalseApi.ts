@@ -36,7 +36,7 @@ export async function generateTrueFalseQuestions(
           content: prompt
         }
       ],
-      temperature: 0.7,
+      temperature: 0.9,
       max_tokens: 2000,
     });
 
